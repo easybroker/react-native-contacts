@@ -3,6 +3,7 @@
 #import "RCTContacts.h"
 #import <AssetsLibrary/AssetsLibrary.h>
 #import <React/RCTLog.h>
+#import <objc/runtime.h>
 
 @implementation RCTContacts {
     CNContactStore * contactStore;
@@ -26,6 +27,14 @@
         NSLog(@"Preloading CNContactViewController");
         CNContactViewController *contactViewController = [CNContactViewController viewControllerForNewContact:nil];
         [contactViewController view];
+        
+        if (@available(iOS 13, *)) {
+            Method original = class_getInstanceMethod([CNContactViewController class], @selector(editCancel:));
+            Method swapped = class_getInstanceMethod([self class], @selector(dismissContactForm));
+            
+            method_exchangeImplementations(original, swapped);
+        }
+
     });
 }
 
@@ -494,7 +503,22 @@ RCT_EXPORT_METHOD(openContactForm:(NSDictionary *)contactData callback:(RCTRespo
         UINavigationController* navigation = [[UINavigationController alloc] initWithRootViewController:controller];
         UIViewController *viewController = (UIViewController*)[[[[UIApplication sharedApplication] delegate] window] rootViewController];
         [viewController presentViewController:navigation animated:YES completion:nil];
-
+        
+        if (@available(iOS 13, *)) {
+            viewController.view.window.backgroundColor=[UIColor blackColor];
+            navigation.navigationBar.topItem.title = @"";
+            UIView *statusBar = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.windowScene.statusBarManager.statusBarFrame];
+            statusBar.backgroundColor = [UIColor blackColor];
+            statusBar.tag=1;
+            UIUserInterfaceStyle uiStyle = [[UITraitCollection currentTraitCollection] userInterfaceStyle];
+           
+            if(uiStyle == UIUserInterfaceStyleDark) {
+                controller.navigationController.navigationBar.tintColor = [UIColor whiteColor];
+            } else {
+                controller.navigationController.navigationBar.tintColor = [UIColor blackColor];
+            }
+            [[UIApplication sharedApplication].keyWindow addSubview:statusBar];
+        }
         updateContactCallback = callback;
     });
 }
@@ -566,18 +590,28 @@ RCT_EXPORT_METHOD(openExistingContact:(NSDictionary *)contactData callback:(RCTR
     }
 }
 
-- (void)cancelContactForm
+- (void) cancelContactForm
 {
     if (updateContactCallback != nil) {
-        UIViewController *rootViewController = (UIViewController*)[[[[UIApplication sharedApplication] delegate] window] rootViewController];
-        [rootViewController dismissViewControllerAnimated:YES completion:nil];
+        [self dismissContactForm];
 
         updateContactCallback(@[[NSNull null]]);
         updateContactCallback = nil;
     }
 }
 
-//dismiss open contact page after done or cancel is clicked
+- (void) dismissContactForm
+{
+    UIViewController *rootViewController = (UIViewController*)[[[[UIApplication sharedApplication] delegate] window] rootViewController];
+    [rootViewController dismissViewControllerAnimated:YES completion:nil];
+    UIView *statusBar = [[UIApplication sharedApplication].keyWindow viewWithTag:1];
+    
+    if(statusBar) {
+        [statusBar removeFromSuperview];
+    }
+}
+
+//dismiss open contact page after done (or cancel when iOS < 13) is clicked
 - (void)contactViewController:(CNContactViewController *)viewController didCompleteWithContact:(CNContact *)contact {
     [viewController dismissViewControllerAnimated:YES completion:nil];
 
@@ -591,6 +625,11 @@ RCT_EXPORT_METHOD(openExistingContact:(NSDictionary *)contactData callback:(RCTR
         }
 
         updateContactCallback = nil;
+    }
+    UIView *statusBar = [[UIApplication sharedApplication].keyWindow viewWithTag:1];
+    
+    if(statusBar) {
+        [statusBar removeFromSuperview];
     }
 }
 
@@ -867,3 +906,4 @@ RCT_EXPORT_METHOD(writePhotoToPath:(RCTResponseSenderBlock) callback)
 }
 
 @end
+
