@@ -5,13 +5,11 @@
 #import <React/RCTLog.h>
 #import <objc/runtime.h>
 
+static NSDictionary * SYSTEM_LABEL_DICTIONARY;
+
 @implementation RCTContacts {
     CNContactStore * contactStore;
-
     RCTResponseSenderBlock updateContactCallback;
-    NSDictionary *labelDictionary = @{@"myKey": @"Hello World !",
-                                 @"other key": @"What's up ?"
-                                 };
 }
 
 - (instancetype)init
@@ -20,6 +18,21 @@
     if (self) {
         [self preLoadContactView];
     }
+    SYSTEM_LABEL_DICTIONARY = @{
+        @"casa" : CNLabelHome,
+        @"home" : CNLabelHome,
+        @"trabajo" : CNLabelWork,
+        @"work" : CNLabelWork,
+        @"celular" : CNLabelPhoneNumberMobile,
+        @"mobile" : CNLabelPhoneNumberMobile,
+        @"localizador" : CNLabelPhoneNumberPager,
+        @"pager" : CNLabelPhoneNumberPager,
+        @"fax casa" : CNLabelPhoneNumberHomeFax,
+        @"home fax" : CNLabelPhoneNumberHomeFax,
+        @"fax trabajo" : CNLabelPhoneNumberWorkFax,
+        @"work fax" : CNLabelPhoneNumberWorkFax,
+        @"personal" : CNLabelHome
+    };
     return self;
 }
 
@@ -30,11 +43,11 @@
         NSLog(@"Preloading CNContactViewController");
         CNContactViewController *contactViewController = [CNContactViewController viewControllerForNewContact:nil];
         [contactViewController view];
-        
+
         if (@available(iOS 13, *)) {
             Method original = class_getInstanceMethod([CNContactViewController class], @selector(editCancel:));
             Method swapped = class_getInstanceMethod([self class], @selector(dismissContactForm));
-            
+
             method_exchangeImplementations(original, swapped);
         }
 
@@ -499,14 +512,14 @@ RCT_EXPORT_METHOD(openContactForm:(NSDictionary *)contactData callback:(RCTRespo
     [self updateRecord:contact withData:contactData];
 
     CNContactViewController *controller = [CNContactViewController viewControllerForNewContact:contact];
-    
+
     controller.delegate = self;
 
     dispatch_async(dispatch_get_main_queue(), ^{
         UINavigationController* navigation = [[UINavigationController alloc] initWithRootViewController:controller];
         UIViewController *viewController = (UIViewController*)[[[[UIApplication sharedApplication] delegate] window] rootViewController];
         [viewController presentViewController:navigation animated:YES completion:nil];
-        
+
         if (@available(iOS 13, *)) {
             viewController.view.window.backgroundColor=[UIColor blackColor];
             navigation.navigationBar.topItem.title = @"";
@@ -514,7 +527,7 @@ RCT_EXPORT_METHOD(openContactForm:(NSDictionary *)contactData callback:(RCTRespo
             statusBar.backgroundColor = [UIColor blackColor];
             statusBar.tag=1;
             UIUserInterfaceStyle uiStyle = [[UITraitCollection currentTraitCollection] userInterfaceStyle];
-           
+
             if(uiStyle == UIUserInterfaceStyleDark) {
                 controller.navigationController.navigationBar.tintColor = [UIColor whiteColor];
             } else {
@@ -608,7 +621,7 @@ RCT_EXPORT_METHOD(openExistingContact:(NSDictionary *)contactData callback:(RCTR
     UIViewController *rootViewController = (UIViewController*)[[[[UIApplication sharedApplication] delegate] window] rootViewController];
     [rootViewController dismissViewControllerAnimated:YES completion:nil];
     UIView *statusBar = [[UIApplication sharedApplication].keyWindow viewWithTag:1];
-    
+
     if(statusBar) {
         [statusBar removeFromSuperview];
     }
@@ -630,7 +643,7 @@ RCT_EXPORT_METHOD(openExistingContact:(NSDictionary *)contactData callback:(RCTR
         updateContactCallback = nil;
     }
     UIView *statusBar = [[UIApplication sharedApplication].keyWindow viewWithTag:1];
-    
+
     if(statusBar) {
         [statusBar removeFromSuperview];
     }
@@ -680,32 +693,12 @@ RCT_EXPORT_METHOD(updateContact:(NSDictionary *)contactData callback:(RCTRespons
 
 -(NSString*) matchSystemContactLabel:(NSString*)label {
     NSString *loweredLabel = [label lowercaseString];
-    if ([loweredLabel isEqualToString: @"casa"] || [loweredLabel isEqualToString: @"home"]){
-        return CNLabelHome;
+    NSString *matchedLabel = [SYSTEM_LABEL_DICTIONARY valueForKey:loweredLabel];
+    if (matchedLabel) {
+        return matchedLabel;
     }
-    else if ([loweredLabel isEqualToString: @"trabajo"] || [loweredLabel isEqualToString: @"work"]){
-        return CNLabelWork;
-    }
-    else if ([loweredLabel isEqualToString: @"celular"] || [loweredLabel isEqualToString: @"mobile"]){
-        return CNLabelPhoneNumberMobile;
-    }
-    else if ([loweredLabel isEqualToString: @"localizador"] || [loweredLabel isEqualToString: @"pager"]){
-        return CNLabelPhoneNumberPager;
-    }
-    else if ([loweredLabel isEqualToString: @"fax casa"] || [loweredLabel isEqualToString: @"home fax"]){
-        return CNLabelPhoneNumberPager;
-    }
-    else if ([loweredLabel isEqualToString: @"fax trabajo"] || [loweredLabel isEqualToString: @"work fax"]){
-        return CNLabelPhoneNumberPager;
-    }
-    else if ([loweredLabel isEqualToString: @"personal"]){
-        return CNLabelHome;
-    }
-    else{
-        return CNLabelOther;
-    }
+    return CNLabelOther;
 }
-
 
 -(void) updateRecord:(CNMutableContact *)contact withData:(NSDictionary *)contactData
 {
@@ -818,7 +811,7 @@ RCT_EXPORT_METHOD(updateContact:(NSDictionary *)contactData callback:(RCTRespons
 + (NSData*) imageData:(NSString*)sourceUri
 {
     NSURL *url = [NSURL URLWithString:sourceUri];
-    
+
     if([sourceUri hasPrefix:@"assets-library"]){
         return [RCTContacts loadImageAsset:[NSURL URLWithString:sourceUri]];
     } else if (url && url.scheme && url.host) {
@@ -927,3 +920,4 @@ RCT_EXPORT_METHOD(writePhotoToPath:(RCTResponseSenderBlock) callback)
 }
 
 @end
+
