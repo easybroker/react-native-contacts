@@ -9,6 +9,9 @@
     CNContactStore * contactStore;
 
     RCTResponseSenderBlock updateContactCallback;
+    NSDictionary *labelDictionary = @{@"myKey": @"Hello World !",
+                                 @"other key": @"What's up ?"
+                                 };
 }
 
 - (instancetype)init
@@ -676,25 +679,26 @@ RCT_EXPORT_METHOD(updateContact:(NSDictionary *)contactData callback:(RCTRespons
 }
 
 -(NSString*) matchSystemContactLabel:(NSString*)label {
-    if ([label isEqualToString: @"Casa"] || [label isEqualToString: @"Home"]){
+    NSString *loweredLabel = [label lowercaseString];
+    if ([loweredLabel isEqualToString: @"casa"] || [loweredLabel isEqualToString: @"home"]){
         return CNLabelHome;
     }
-    else if ([label isEqualToString: @"Trabajo"] || [label isEqualToString: @"Work"]){
+    else if ([loweredLabel isEqualToString: @"trabajo"] || [loweredLabel isEqualToString: @"work"]){
         return CNLabelWork;
     }
-    else if ([label isEqualToString: @"Celular"] || [label isEqualToString: @"Mobile"]){
+    else if ([loweredLabel isEqualToString: @"celular"] || [loweredLabel isEqualToString: @"mobile"]){
         return CNLabelPhoneNumberMobile;
     }
-    else if ([label isEqualToString: @"Localizador"] || [label isEqualToString: @"Pager"]){
+    else if ([loweredLabel isEqualToString: @"localizador"] || [loweredLabel isEqualToString: @"pager"]){
         return CNLabelPhoneNumberPager;
     }
-    else if ([label isEqualToString: @"Fax casa"] || [label isEqualToString: @"Home fax"]){
+    else if ([loweredLabel isEqualToString: @"fax casa"] || [loweredLabel isEqualToString: @"home fax"]){
         return CNLabelPhoneNumberPager;
     }
-    else if ([label isEqualToString: @"Fax trabajo"] || [label isEqualToString: @"Work fax"]){
+    else if ([loweredLabel isEqualToString: @"fax trabajo"] || [loweredLabel isEqualToString: @"work fax"]){
         return CNLabelPhoneNumberPager;
     }
-    else if ([label isEqualToString: @"Personal"]){
+    else if ([loweredLabel isEqualToString: @"personal"]){
         return CNLabelHome;
     }
     else{
