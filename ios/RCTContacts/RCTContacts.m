@@ -675,6 +675,34 @@ RCT_EXPORT_METHOD(updateContact:(NSDictionary *)contactData callback:(RCTRespons
     }
 }
 
+-(NSString*) matchSystemContactLabel:(NSString*)label {
+    if ([label isEqualToString: @"Casa"] || [label isEqualToString: @"Home"]){
+        return CNLabelHome;
+    }
+    else if ([label isEqualToString: @"Trabajo"] || [label isEqualToString: @"Work"]){
+        return CNLabelWork;
+    }
+    else if ([label isEqualToString: @"Celular"] || [label isEqualToString: @"Mobile"]){
+        return CNLabelPhoneNumberMobile;
+    }
+    else if ([label isEqualToString: @"Localizador"] || [label isEqualToString: @"Pager"]){
+        return CNLabelPhoneNumberPager;
+    }
+    else if ([label isEqualToString: @"Fax casa"] || [label isEqualToString: @"Home fax"]){
+        return CNLabelPhoneNumberPager;
+    }
+    else if ([label isEqualToString: @"Fax trabajo"] || [label isEqualToString: @"Work fax"]){
+        return CNLabelPhoneNumberPager;
+    }
+    else if ([label isEqualToString: @"Personal"]){
+        return CNLabelHome;
+    }
+    else{
+        return CNLabelOther;
+    }
+}
+
+
 -(void) updateRecord:(CNMutableContact *)contact withData:(NSDictionary *)contactData
 {
     NSString *givenName = [contactData valueForKey:@"givenName"];
@@ -717,20 +745,9 @@ RCT_EXPORT_METHOD(updateContact:(NSDictionary *)contactData callback:(RCTRespons
     for (id phoneData in [contactData valueForKey:@"phoneNumbers"]) {
         NSString *label = [phoneData valueForKey:@"label"];
         NSString *number = [phoneData valueForKey:@"number"];
-
         CNLabeledValue *phone;
-        if ([label isEqual: @"main"]){
-            phone = [[CNLabeledValue alloc] initWithLabel:CNLabelPhoneNumberMain value:[[CNPhoneNumber alloc] initWithStringValue:number]];
-        }
-        else if ([label isEqual: @"mobile"]){
-            phone = [[CNLabeledValue alloc] initWithLabel:CNLabelPhoneNumberMobile value:[[CNPhoneNumber alloc] initWithStringValue:number]];
-        }
-        else if ([label isEqual: @"iPhone"]){
-            phone = [[CNLabeledValue alloc] initWithLabel:CNLabelPhoneNumberiPhone value:[[CNPhoneNumber alloc] initWithStringValue:number]];
-        }
-        else{
-            phone = [[CNLabeledValue alloc] initWithLabel:label value:[[CNPhoneNumber alloc] initWithStringValue:number]];
-        }
+        NSString *matchedLabel = [self matchSystemContactLabel:label];
+        phone = [[CNLabeledValue alloc] initWithLabel:matchedLabel value:[[CNPhoneNumber alloc] initWithStringValue:number]];
 
         [phoneNumbers addObject:phone];
     }
@@ -758,7 +775,7 @@ RCT_EXPORT_METHOD(updateContact:(NSDictionary *)contactData callback:(RCTRespons
         NSString *email = [emailData valueForKey:@"email"];
 
         if(label && email) {
-            [emails addObject:[[CNLabeledValue alloc] initWithLabel:label value:email]];
+            [emails addObject:[[CNLabeledValue alloc] initWithLabel:[self matchSystemContactLabel:label] value:email]];
         }
     }
 
@@ -906,4 +923,3 @@ RCT_EXPORT_METHOD(writePhotoToPath:(RCTResponseSenderBlock) callback)
 }
 
 @end
-
