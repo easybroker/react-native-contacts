@@ -314,19 +314,23 @@ public class ContactsManager extends ReactContextBaseJavaModule implements Activ
         String jobTitle = contact.hasKey("jobTitle") ? contact.getString("jobTitle") : null;
         String department = contact.hasKey("department") ? contact.getString("department") : null;
         String thumbnailPath = contact.hasKey("thumbnailPath") ? contact.getString("thumbnailPath") : null;
+        String contactNote = contact.hasKey("note") ? contact.getString("note") : null;
 
         ReadableArray phoneNumbers = contact.hasKey("phoneNumbers") ? contact.getArray("phoneNumbers") : null;
         int numOfPhones = 0;
         String[] phones = null;
-        Integer[] phonesLabels = null;
+        Integer[] phonesTypes = null;
+        String[] phonesLabels = null;
         if (phoneNumbers != null) {
             numOfPhones = phoneNumbers.size();
             phones = new String[numOfPhones];
-            phonesLabels = new Integer[numOfPhones];
+            phonesTypes = new Integer[numOfPhones];
+            phonesLabels = new String[numOfPhones];
             for (int i = 0; i < numOfPhones; i++) {
                 phones[i] = phoneNumbers.getMap(i).getString("number");
                 String label = phoneNumbers.getMap(i).getString("label");
-                phonesLabels[i] = mapStringToPhoneType(label);
+                phonesTypes[i] = mapStringToPhoneType(label);
+                phonesLabels[i] = label;
             }
         }
 
@@ -344,15 +348,18 @@ public class ContactsManager extends ReactContextBaseJavaModule implements Activ
         ReadableArray emailAddresses = contact.hasKey("emailAddresses") ? contact.getArray("emailAddresses") : null;
         int numOfEmails = 0;
         String[] emails = null;
-        Integer[] emailsLabels = null;
+        Integer[] emailsTypes = null;
+        String[] emailsLabels = null;
         if (emailAddresses != null) {
             numOfEmails = emailAddresses.size();
             emails = new String[numOfEmails];
-            emailsLabels = new Integer[numOfEmails];
+            emailsTypes = new Integer[numOfEmails];
+            emailsLabels = new String[numOfEmails];
             for (int i = 0; i < numOfEmails; i++) {
                 emails[i] = emailAddresses.getMap(i).getString("email");
                 String label = emailAddresses.getMap(i).getString("label");
-                emailsLabels[i] = mapStringToEmailType(label);
+                emailsTypes[i] = mapStringToEmailType(label);
+                emailsLabels[i] = label;
             }
         }
 
@@ -387,6 +394,12 @@ public class ContactsManager extends ReactContextBaseJavaModule implements Activ
 
         ArrayList<ContentValues> contactData = new ArrayList<>();
 
+        ContentValues note = new ContentValues();
+
+        note.put(ContactsContract.Data.MIMETYPE, CommonDataKinds.Note.CONTENT_ITEM_TYPE);
+        note.put(ContactsContract.CommonDataKinds.Note.NOTE, contactNote);
+        contactData.add(note);
+
         ContentValues name = new ContentValues();
         name.put(ContactsContract.Contacts.Data.MIMETYPE, ContactsContract.CommonDataKinds.Identity.CONTENT_ITEM_TYPE);
         name.put(ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME, givenName);
@@ -413,7 +426,8 @@ public class ContactsManager extends ReactContextBaseJavaModule implements Activ
         for (int i = 0; i < numOfEmails; i++) {
             ContentValues email = new ContentValues();
             email.put(ContactsContract.Data.MIMETYPE, CommonDataKinds.Email.CONTENT_ITEM_TYPE);
-            email.put(CommonDataKinds.Email.TYPE, emailsLabels[i]);
+            email.put(CommonDataKinds.Email.TYPE, emailsTypes[i]);
+            email.put(CommonDataKinds.Email.LABEL, emailsLabels[i]);
             email.put(CommonDataKinds.Email.ADDRESS, emails[i]);
             contactData.add(email);
         }
@@ -421,7 +435,8 @@ public class ContactsManager extends ReactContextBaseJavaModule implements Activ
         for (int i = 0; i < numOfPhones; i++) {
             ContentValues phone = new ContentValues();
             phone.put(ContactsContract.Data.MIMETYPE, CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
-            phone.put(CommonDataKinds.Phone.TYPE, phonesLabels[i]);
+            phone.put(CommonDataKinds.Phone.TYPE, phonesTypes[i]);
+            phone.put(CommonDataKinds.Phone.LABEL, phonesLabels[i]);
             phone.put(CommonDataKinds.Phone.NUMBER, phones[i]);
             contactData.add(phone);
         }
