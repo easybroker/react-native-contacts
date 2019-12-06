@@ -641,28 +641,10 @@ RCT_EXPORT_METHOD(openContactForm:(NSDictionary *)contactData callback:(RCTRespo
         if (@available(iOS 13, *)) {
             viewController.view.window.backgroundColor=[UIColor blackColor];
             navigation.navigationBar.topItem.title = @"";
-            UIView *statusBar = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.windowScene.statusBarManager.statusBarFrame];
-            statusBar.backgroundColor = [UIColor blackColor];
-            statusBar.tag=1;
-            controller.navigationController.navigationBar.tintColor = [UIColor blackColor];
-            [[UIApplication sharedApplication].keyWindow addSubview:statusBar];
-        }
 
-        if (@available(iOS 13, *)) {
-            viewController.view.window.backgroundColor=[UIColor blackColor];
-            navigation.navigationBar.topItem.title = @"";
-            UIView *statusBar = [[UIView alloc]initWithFrame:[UIApplication sharedApplication].keyWindow.windowScene.statusBarManager.statusBarFrame];
-            statusBar.backgroundColor = [UIColor blackColor];
-            statusBar.tag=1;
             UIUserInterfaceStyle uiStyle = [[UITraitCollection currentTraitCollection] userInterfaceStyle];
-
-            if(uiStyle == UIUserInterfaceStyleDark) {
-                controller.navigationController.navigationBar.tintColor = [UIColor whiteColor];
-            } else {
-                controller.navigationController.navigationBar.tintColor = [UIColor blackColor];
-            }
-            [[UIApplication sharedApplication].keyWindow addSubview:statusBar];
         }
+        
         updateContactCallback = callback;
     });
 }
@@ -755,11 +737,6 @@ RCT_EXPORT_METHOD(openExistingContact:(NSDictionary *)contactData callback:(RCTR
 {
     UIViewController *rootViewController = (UIViewController*)[[[[UIApplication sharedApplication] delegate] window] rootViewController];
     [rootViewController dismissViewControllerAnimated:YES completion:nil];
-    UIView *statusBar = [[UIApplication sharedApplication].keyWindow viewWithTag:1];
-
-    if(statusBar) {
-        [statusBar removeFromSuperview];
-    }
 }
 
 //dismiss open contact page after done (or cancel when iOS < 13) is clicked
@@ -776,12 +753,6 @@ RCT_EXPORT_METHOD(openExistingContact:(NSDictionary *)contactData callback:(RCTR
         }
 
         updateContactCallback = nil;
-    }
-
-    UIView *statusBar = [[UIApplication sharedApplication].keyWindow viewWithTag:1];
-
-    if(statusBar) {
-        [statusBar removeFromSuperview];
     }
 }
 
@@ -1053,4 +1024,3 @@ RCT_EXPORT_METHOD(writePhotoToPath:(RCTResponseSenderBlock) callback)
 }
 
 @end
-
