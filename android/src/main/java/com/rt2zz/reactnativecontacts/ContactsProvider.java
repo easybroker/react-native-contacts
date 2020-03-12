@@ -356,8 +356,16 @@ public class ContactsProvider {
             switch(mimeType) {
                 case StructuredName.CONTENT_ITEM_TYPE:
                     contact.givenName = cursor.getString(cursor.getColumnIndex(StructuredName.GIVEN_NAME));
-                    contact.middleName = cursor.getString(cursor.getColumnIndex(StructuredName.MIDDLE_NAME));
-                    contact.familyName = cursor.getString(cursor.getColumnIndex(StructuredName.FAMILY_NAME));
+                    if (cursor.getString(cursor.getColumnIndex(StructuredName.MIDDLE_NAME)) != null) {
+                        contact.middleName = cursor.getString(cursor.getColumnIndex(StructuredName.MIDDLE_NAME));
+                    } else {
+                        contact.middleName = "";
+                    }
+                    if (cursor.getString(cursor.getColumnIndex(StructuredName.FAMILY_NAME)) != null) {
+                        contact.familyName = cursor.getString(cursor.getColumnIndex(StructuredName.FAMILY_NAME));
+                    } else {
+                        contact.familyName = "";
+                    }
                     contact.prefix = cursor.getString(cursor.getColumnIndex(StructuredName.PREFIX));
                     contact.suffix = cursor.getString(cursor.getColumnIndex(StructuredName.SUFFIX));
                     break;
@@ -411,6 +419,43 @@ public class ContactsProvider {
                         contact.emails.add(new Contact.Item(label, email, id));
                     }
                     break;
+                case Website.CONTENT_ITEM_TYPE:
+                    String url = cursor.getString(cursor.getColumnIndex(Website.URL));
+                    int websiteType = cursor.getInt(cursor.getColumnIndex(Website.TYPE));
+                    if (!TextUtils.isEmpty(url)) {
+                        String label;
+                        switch (websiteType) {
+                            case Website.TYPE_HOMEPAGE:
+                                label = "homepage";
+                                break;
+                            case Website.TYPE_BLOG:
+                                label = "blog";
+                                break;
+                            case Website.TYPE_PROFILE:
+                                label = "profile";
+                                break;
+                            case Website.TYPE_HOME:
+                                label = "home";
+                                break;
+                            case Website.TYPE_WORK:
+                                label = "work";
+                                break;
+                            case Website.TYPE_FTP:
+                                label = "ftp";
+                                break;
+                            case Website.TYPE_CUSTOM:
+                                if (cursor.getString(cursor.getColumnIndex(Website.LABEL)) != null) {
+                                    label = cursor.getString(cursor.getColumnIndex(Website.LABEL)).toLowerCase();
+                                } else {
+                                    label = "";
+                                }
+                                break;
+                            default:
+                                label = "other";
+                        }
+                        contact.urls.add(new Contact.Item(label, url, id));
+                    }
+                    break;
                 case Organization.CONTENT_ITEM_TYPE:
                     contact.company = cursor.getString(cursor.getColumnIndex(Organization.COMPANY));
                     contact.jobTitle = cursor.getString(cursor.getColumnIndex(Organization.TITLE));
@@ -443,7 +488,7 @@ public class ContactsProvider {
                                     contact.birthday = new Contact.Birthday(year, month, day);
                                 }
                             }
-                        } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+                        } catch (NumberFormatException | ArrayIndexOutOfBoundsException | NullPointerException e) {
                             // whoops, birthday isn't in the format we expect
                             Log.w("ContactsProvider", e.toString());
 

@@ -6,7 +6,7 @@ Ask questions on [stackoverflow](https://stackoverflow.com/questions/tagged/reac
 
 ## Usage
 `getAll` is a database intensive process, and can take a long time to complete depending on the size of the contacts list. Because of this, it is recommended you access the `getAll` method before it is needed, and cache the results for future use.
-```es
+```js
 import Contacts from 'react-native-contacts';
 
 Contacts.getAll((err, contacts) => {
@@ -20,7 +20,7 @@ See the full [API](#api) for more methods.
 
 ### Android permissions
 On android you must request permissions beforehand
-```es
+```js
 import { PermissionsAndroid } from 'react-native';
 import Contacts from 'react-native-contacts';
 
@@ -28,7 +28,8 @@ PermissionsAndroid.request(
   PermissionsAndroid.PERMISSIONS.READ_CONTACTS,
   {
     'title': 'Contacts',
-    'message': 'This app would like to view your contacts.'
+    'message': 'This app would like to view your contacts.',
+    'buttonPositive': 'Please accept bare mortal'
   }
 ).then(() => {
   Contacts.getAll((err, contacts) => {
@@ -82,15 +83,12 @@ end
 
 Using the same instructions as https://facebook.github.io/react-native/docs/linking-libraries-ios.html
 1. open in xcode `open ios/yourProject.xcodeproj/`
-1. drag `./node_modules/react-native-contacts/ios/RCTContacts.xcodeproj` to `Libraries` in you project view.
+1. drag `./node_modules/react-native-contacts/ios/RCTContacts.xcodeproj` to `Libraries` in your project view.
 1. In the XCode project navigator, select your project,
 select the `Build Phases` tab drag `Libraries > RCTContacts.xcodeproj > Products > libRCTContacts.a` into the `Link Binary With Libraries` section. Video to clarify 
   [Adding Camera Roll to an ios project in React Native](https://www.youtube.com/watch?v=e3ReNbQu79c).
-1. Add kit specific "permission" keys to your Xcode `Info.plist` file, in order to make `requestPermission` work. Otherwise your app crashes when requesting the specific permission. Open `Info.plist`. Add key `Privacy - Contacts Usage Description` with your kit specific permission. The value for the key is optional in development. If you submit to the App Store the value must explain why you need this permission.
 
-<img width="338" alt="screen shot 2016-09-21 at 13 13 21" src="https://cloud.githubusercontent.com/assets/5707542/18704973/3cde3b44-7ffd-11e6-918b-63888e33f983.png">
-
-You should be able to run the app via the Run button in xcode or `react-native run-ios` in the terminal.
+Run the app via the Run button in xcode or `react-native run-ios` in the terminal.
 
 ### Android
 For react native versions 0.60 and above you have to use Android X. Android X support was added to react-native-contacts in version 5.x+. If you are using rn 0.59 and below install rnc versions 4.x instead.
@@ -135,7 +133,7 @@ public class MainApplication extends Application implements ReactApplication {
 #### Permissions
 ##### API 23+
 Android requires allowing permissions with https://facebook.github.io/react-native/docs/permissionsandroid.html
-The `READ_CONTACTS` permission is automatically added to `AndroidManifest.xml`, so you just need request it. If your app creates contacts add `WRITE_CONTACTS` permission to `AndroidManifest.xml` and request the permission at runtime.
+The `READ_CONTACTS` permission must be added to your main application's `AndroidManifest.xml`. If your app creates contacts add `WRITE_CONTACTS` permission to `AndroidManifest.xml` and request the permission at runtime.
 ```xml
 ...
 <uses-permission android:name="android.permission.WRITE_CONTACTS" />
@@ -160,10 +158,21 @@ Without it, your apk release version could failed
 -keepclassmembers class com.rt2zz.reactnativecontacts.** {*;}
 ```
 
+### All RN versions
+
+#### ios
+Add kit specific "permission" keys to your Xcode `Info.plist` file, in order to make `requestPermission` work. Otherwise your app crashes when requesting the specific permission. Open `Info.plist`. Add key `Privacy - Contacts Usage Description` with your kit specific permission. The value for the key is optional in development. If you submit to the App Store the value must explain why you need this permission.
+
+<img width="338" alt="screen shot 2016-09-21 at 13 13 21" src="https://cloud.githubusercontent.com/assets/5707542/18704973/3cde3b44-7ffd-11e6-918b-63888e33f983.png">
+
+##### Accessing note filed on iOS 13 (optional)
+If you'd like to read/write the contact's notes, call the `iosEnableNotesUsage(true)` method before accessing the contact infos. Also, a `com.apple.developer.contacts.notes` entitlement must be added to the project. Before submitting your app to the AppStore, the permission for using the entitlement has to be granted as well. You can find a more detailed explanation [here](https://developer.apple.com/documentation/bundleresources/entitlements/com_apple_developer_contacts_notes?language=objc).
+
 ## API
  * `getAll` (callback) - returns *all* contacts as an array of objects
  * `getAllWithoutPhotos` - same as `getAll` on Android, but on iOS it will not return uris for contact photos (because there's a significant overhead in creating the images)
  * `getContactById(contactId, callback)` - returns contact with defined contactId (or null if it doesn't exist)
+ * `getCount(callback)` - returns the number of contacts
  * `getPhotoForId(contactId, callback)` - returns a URI (or null) for a contacts photo
  * `addContact` (contact, callback) - adds a contact to the AddressBook.  
  * `openContactForm` (contact, callback) - create a new contact and display in contactsUI.  
@@ -185,41 +194,41 @@ callback <Function>
 ```
 
 ## Example Contact Record
-```es
+```js
 {
   recordID: '6b2237ee0df85980',
-  company: "",
+  backTitle: '',
+  company: '',
   emailAddresses: [{
-    label: "work",
-    email: "carl-jung@example.com",
+    label: 'work',
+    email: 'carl-jung@example.com',
   }],
-  familyName: "Jung",
-  givenName: "Carl",
-  jobTitle: "",
-  note: 'some text',
-  urlAddresses: [{
-    label: "home",
-    url: "www.jung.com",
-  }],
-  middleName: "",
+  familyName: 'Jung',
+  givenName: 'Carl',
+  middleName: '',
+  jobTitle: '',
   phoneNumbers: [{
-    label: "mobile",
-    number: "(555) 555-5555",
+    label: 'mobile',
+    number: '(555) 555-5555',
   }],
   hasThumbnail: true,
   thumbnailPath: 'content://com.android.contacts/display_photo/3',
-  postalAddresses: [
-    {
-      street: '123 Fake Street',
-      city: 'Sample City',
-      state: 'CA',
-      region: 'CA',
-      postCode: '90210',
-      country: 'USA',
-      label: 'home'
-    }
-  ],
-  birthday: {"year": 1988, "month": 0, "day": 1 }
+  postalAddresses: [{
+    label: 'home',
+    formattedAddress: '',
+    street: '123 Fake Street',
+    pobox: '',
+    neighborhood: '',
+    city: 'Sample City',
+    region: 'CA',
+    state: 'CA',
+    postCode: '90210',
+    country: 'USA',
+  }],
+  prefix: 'MR',
+  suffix: '',
+  department: '',
+  birthday: {'year': 1988, 'month': 0, 'day': 1 }
 }
 ```
 **NOTE**
@@ -228,7 +237,7 @@ callback <Function>
 
 ## Adding Contacts
 Currently all fields from the contact record except for thumbnailPath are supported for writing
-```es
+```js
 var newPerson = {
   emailAddresses: [{
     label: "work",
@@ -246,7 +255,7 @@ Contacts.addContact(newPerson, (err) => {
 
 ## Open Contact Form
 Currently all fields from the contact record except for thumbnailPath are supported for writing
-```es
+```js
 var newPerson = {
   emailAddresses: [{
     label: "work",
@@ -264,7 +273,7 @@ You may want to edit the contact before saving it into your phone book. So using
 
 ## Updating Contacts
 Example
-```es
+```js
 Contacts.getAll((err, contacts) => {
   if (err) {
     throw err;
@@ -292,7 +301,7 @@ See https://github.com/rt2zz/react-native-contacts/issues/332#issuecomment-45567
 
 ## Delete Contacts
 You can delete a record using only it's recordID
-```es
+```js
 Contacts.deleteContact({recordID: 1}, (err, recordId) => {
   if (err) {
     throw err;
@@ -301,7 +310,7 @@ Contacts.deleteContact({recordID: 1}, (err, recordId) => {
 })
 ```
 Or by passing the full contact object with a `recordID` field.
-```es
+```js
 Contacts.deleteContact(contact, (err, recordId) => {
   if (err) {
     throw err;
@@ -314,7 +323,7 @@ Contacts.deleteContact(contact, (err, recordId) => {
 
 The thumbnailPath is the direct URI for the temp location of the contact's cropped thumbnail image.
 
-```es
+```js
 <Image source={{uri: contact.thumbnailPath}} />
 ```
 
@@ -323,7 +332,7 @@ The thumbnailPath is the direct URI for the temp location of the contact's cropp
 `requestPermission` (callback) - request permission to access Contacts.  
 
 Usage as follows:
-```es
+```js
 Contacts.checkPermission((err, permission) => {
   if (err) throw err;
 
@@ -353,12 +362,13 @@ You can find an example app/showcase [here](https://github.com/rt2zz/react-nativ
 
 
 <h2 align="center">Maintainers</h2>
-
+<p>If your business needs premium react native support please reach out to the maintainer.</p>
+<a href="https://harrymoreno.com/hire-me">harrymoreno.com</a>
 <table>
   <tbody>
     <tr>
       <td align="center">
-        <a href="https://github.com/morenoh149">
+        <a href="https://harrymoreno.com/hire-me">
           <img width="150" height="150" src="https://github.com/morenoh149.png?size=150">
           </br>
           Harry Moreno

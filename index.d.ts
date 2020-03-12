@@ -1,6 +1,7 @@
 export function getAll(callback: (error: any, contacts: Contact[]) => void): void;
 export function getAllWithoutPhotos(callback: (error: any, contacts: Contact[]) => void): void;
 export function getContactById(contactId: string, callback: (error: any, contact: Contact) => void): void;
+export function getCount(callback: (count: number) => void): void;
 export function getPhotoForId(contactId: string, callback: (error: any, photoUri: string) => void): void;
 export function addContact(contact: Contact, callback: (error?: any) => void): void;
 export function openContactForm(contact: Contact, callback: (error: any, contact: Contact) => void): void;
@@ -12,6 +13,7 @@ export function getContactsByPhoneNumber(phoneNumber: string, callback: (error: 
 export function checkPermission(callback: (error: any, result: 'authorized' | 'denied' | 'undefined') => void): void;
 export function requestPermission(callback: (error: any, result: 'authorized' | 'denied' | 'undefined') => void): void;
 export function writePhotoToPath(contactId: string, file: string, callback: (error: any, result: boolean) => void): void;
+export function iosEnableNotesUsage(enabled: boolean): void;
 
 export interface EmailAddress {
     label: string;
@@ -44,6 +46,7 @@ export interface Birthday {
 
 export interface Contact {
     recordID: string;
+    backTitle: string;
     company: string;
     emailAddresses: EmailAddress[];
     familyName: string;
@@ -58,4 +61,5 @@ export interface Contact {
     suffix: string;
     department: string;
     birthday: Birthday;
+    note: string;
 }

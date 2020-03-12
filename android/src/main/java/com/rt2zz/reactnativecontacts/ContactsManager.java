@@ -21,7 +21,6 @@ import android.provider.ContactsContract.CommonDataKinds;
 import android.provider.ContactsContract.CommonDataKinds.Organization;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.CommonDataKinds.Note;
-import android.provider.ContactsContract.CommonDataKinds.Website;
 import android.provider.ContactsContract.RawContacts;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -35,7 +34,6 @@ import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableArray;
-import com.facebook.react.bridge.Arguments;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
@@ -44,7 +42,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.io.InputStream;
-import java.io.IOException;
 import java.util.Hashtable;
 
 public class ContactsManager extends ReactContextBaseJavaModule implements ActivityEventListener {
@@ -104,7 +101,7 @@ public class ContactsManager extends ReactContextBaseJavaModule implements Activ
                 return null;
             }
         };
-        myAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        myAsyncTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
     }
 
     @ReactMethod
@@ -122,7 +119,7 @@ public class ContactsManager extends ReactContextBaseJavaModule implements Activ
                 return null;
             }
         };
-        myAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        myAsyncTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
     }
 
     /**
@@ -146,7 +143,7 @@ public class ContactsManager extends ReactContextBaseJavaModule implements Activ
                 return null;
             }
         };
-        myAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        myAsyncTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
     }
 
     /**
@@ -170,7 +167,7 @@ public class ContactsManager extends ReactContextBaseJavaModule implements Activ
                 return null;
             }
         };
-        myAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        myAsyncTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
     }
 
     /**
@@ -194,7 +191,7 @@ public class ContactsManager extends ReactContextBaseJavaModule implements Activ
                 return null;
             }
         };
-        myAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        myAsyncTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
     }
 
     /**
@@ -217,7 +214,7 @@ public class ContactsManager extends ReactContextBaseJavaModule implements Activ
                 return null;
             }
         };
-        myAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        myAsyncTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
     }
 
     /**
@@ -240,7 +237,7 @@ public class ContactsManager extends ReactContextBaseJavaModule implements Activ
                 return null;
             }
         };
-        myAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        myAsyncTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
     }
 
     @ReactMethod
@@ -275,7 +272,7 @@ public class ContactsManager extends ReactContextBaseJavaModule implements Activ
                 return null;
             }
         };
-        myAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        myAsyncTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
     }
 
     private Bitmap getThumbnailBitmap(String thumbnailPath) {
@@ -371,6 +368,7 @@ public class ContactsManager extends ReactContextBaseJavaModule implements Activ
         String[] postalAddressesRegion = null;
         String[] postalAddressesPostCode = null;
         String[] postalAddressesCountry = null;
+        String[] postalAddressesFormattedAddress = null;
         Integer[] postalAddressesLabel = null;
         if (postalAddresses != null) {
             numOfPostalAddresses = postalAddresses.size();
@@ -380,6 +378,7 @@ public class ContactsManager extends ReactContextBaseJavaModule implements Activ
             postalAddressesRegion = new String[numOfPostalAddresses];
             postalAddressesPostCode = new String[numOfPostalAddresses];
             postalAddressesCountry = new String[numOfPostalAddresses];
+            postalAddressesFormattedAddress = new String[numOfPostalAddresses];
             postalAddressesLabel = new Integer[numOfPostalAddresses];
             for (int i = 0; i < numOfPostalAddresses; i++) {
                 postalAddressesStreet[i] = postalAddresses.getMap(i).getString("street");
@@ -388,6 +387,7 @@ public class ContactsManager extends ReactContextBaseJavaModule implements Activ
                 postalAddressesRegion[i] = postalAddresses.getMap(i).getString("region");
                 postalAddressesPostCode[i] = postalAddresses.getMap(i).getString("postCode");
                 postalAddressesCountry[i] = postalAddresses.getMap(i).getString("country");
+                postalAddressesFormattedAddress[i] = postalAddresses.getMap(i).getString("formattedAddress");
                 postalAddressesLabel[i] = mapStringToPostalAddressType(postalAddresses.getMap(i).getString("label"));
             }
         }
@@ -449,6 +449,7 @@ public class ContactsManager extends ReactContextBaseJavaModule implements Activ
             structuredPostal.put(CommonDataKinds.StructuredPostal.REGION, postalAddressesRegion[i]);
             structuredPostal.put(CommonDataKinds.StructuredPostal.COUNTRY, postalAddressesCountry[i]);
             structuredPostal.put(CommonDataKinds.StructuredPostal.POSTCODE, postalAddressesPostCode[i]);
+            structuredPostal.put(CommonDataKinds.StructuredPostal.FORMATTED_ADDRESS, postalAddressesFormattedAddress[i]);
             //No state column in StructuredPostal
             //structuredPostal.put(CommonDataKinds.StructuredPostal.???, postalAddressesState[i]);
             contactData.add(structuredPostal);
@@ -805,7 +806,7 @@ public class ContactsManager extends ReactContextBaseJavaModule implements Activ
         ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>();
 
         ContentProviderOperation.Builder op = ContentProviderOperation.newUpdate(RawContacts.CONTENT_URI)
-                .withSelection(ContactsContract.Data.CONTACT_ID + "=?", new String[]{String.valueOf(recordID)})
+                .withSelection(ContactsContract.Data.CONTACT_ID + "= ? AND " + ContactsContract.Data.MIMETYPE + " = ?", new String[]{String.valueOf(recordID), StructuredName.CONTENT_ITEM_TYPE})
                 .withValue(RawContacts.ACCOUNT_TYPE, null)
                 .withValue(RawContacts.ACCOUNT_NAME, null);
         ops.add(op.build());
@@ -977,6 +978,14 @@ public class ContactsManager extends ReactContextBaseJavaModule implements Activ
     @ReactMethod
     public void requestPermission(Callback callback) {
         requestReadContactsPermission(callback);
+    }
+
+    /*
+     * Enable note usage
+     */
+    @ReactMethod
+    public void iosEnableNotesUsage(boolean enabled) {
+        // this method is only needed for iOS
     }
 
     private void requestReadContactsPermission(Callback callback) {
